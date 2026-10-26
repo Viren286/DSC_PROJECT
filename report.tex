@@ -1,0 +1,588 @@
+%=======================================================================
+%  CSE558 Data Science - Midterm Project Report (course template)
+%  Monsoon 2026, IIIT-Delhi  --  Group Prompters
+%  Compile with pdfLaTeX (twice) or tectonic.
+%=======================================================================
+\documentclass[10pt,a4paper,twocolumn]{article}
+
+%========================= EDIT THIS =========================
+\newcommand{\projecttitle}{Predictive Flight Fare Dynamics: Identifying Optimal
+  Booking Horizons and Date-Specific Pricing}
+\newif\ifshowhints
+\showhintsfalse
+%=============================================================
+
+%-------------------------------------------- fonts (no need to edit)
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \IfFileExists{carlito.sty}%
+    {\usepackage[sfdefault]{carlito}}%              Calibri look
+    {\usepackage[scaled=0.92]{helvet}\renewcommand{\familydefault}{\sfdefault}}%
+  \usepackage{courier}
+\else
+  \usepackage[no-math]{fontspec}
+  \setmainfont{Carlito}[Extension=.ttf, UprightFont=*-Regular, BoldFont=*-Bold,
+    ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic]
+\fi
+
+%----------------------------------------------------------- packages
+\usepackage[margin=18mm,bottom=20mm,columnsep=7mm]{geometry}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{needspace}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[font=footnotesize,labelfont=bf,skip=1pt]{subcaption}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={\projecttitle},
+            pdfsubject={CSE558 Data Science, Monsoon 2026: Midterm Project Report}}
+
+%------------------------------------------------------------- layout
+\definecolor{eg}{HTML}{7396C4}         % worked example (light blue)
+\definecolor{hintgrey}{gray}{0.58}     % instructions (light grey)
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{12pt}{3pt}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{10pt}{2pt}
+\newcommand{\sectionbreak}{\needspace{10\baselineskip}}
+\newcommand{\subsectionbreak}{\needspace{20\baselineskip}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setlist{leftmargin=1.2em, itemsep=2pt, topsep=2pt, parsep=0pt}
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{4pt}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{K}[1]{>{\raggedright\arraybackslash\bfseries\boldmath}p{#1}}  % bold labels
+
+%--------------------------------------------------------- shorthands
+\newcommand{\hint}[1]{\ifshowhints{\footnotesize\itshape\color{hintgrey}#1\par}\fi}
+\newcommand{\eg}[1]{#1}
+\newcommand{\egblock}[1]{{#1\par}}
+\newcommand{\field}[2]{\textbf{#1}~\eg{#2}\par}
+\newcommand{\tpart}[2]{\par\needspace{12\baselineskip}\smallskip\textbf{#1)~#2}\par}
+\newcommand{\minihead}[1]{\par\needspace{8\baselineskip}\smallskip\textbf{#1}\par}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\figfile}[2]{%
+  \IfFileExists{#1}%
+    {\includegraphics[width=\linewidth,height=#2,keepaspectratio]{#1}}%
+    {\fbox{\parbox[c][#2][c]{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}%
+      {\centering\small\itshape\color{hintgrey}Your plot: \detokenize{#1}}}}}
+\newcommand{\rs}{Rs.\,}
+% One sub-plot with its one-line takeaway
+\newcommand{\subfig}[4]{\begin{subfigure}[t]{#1\linewidth}\centering
+  \figfile{figures/#2}{#3}\caption{#4}\end{subfigure}}
+
+%=======================================================================
+\begin{document}
+
+\twocolumn[%
+{\small\bfseries CSE558 Data Science\ \ \textbullet\ \ Midterm Project Report\ \ \textbullet\ \ Monsoon 2026\par}
+\vspace{4pt}
+{\LARGE\bfseries\raggedright\projecttitle\par}
+\vspace{6pt}
+\rule{\linewidth}{1pt}
+
+{\small
+\begin{tabularx}{\linewidth}{@{}K{2.4cm} Y@{}}
+\toprule
+Group name & Prompters (Text / Documents, Tabular / Transactional, Finance / Economics) \\
+Dataset & \href{https://www.kaggle.com/datasets/shubhambathwal/flight-price-prediction}{kaggle.com/datasets/shubhambathwal/flight-price-prediction} \\
+Code & \href{https://github.com/Viren286/DSC_PROJECT}{github.com/Viren286/DSC\_PROJECT} (notebook \code{main\_v2.ipynb}, \code{hypothesis\_tests.py} and README) \\
+\bottomrule
+\end{tabularx}}
+
+\vspace{2pt}
+{\small
+\begin{tabularx}{\linewidth}{@{}L{0.5cm} L{3.4cm} L{2.3cm} L{4.8cm} Y@{}}
+\toprule
+\textbf{\#} & \textbf{Name} & \textbf{Roll no.} & \textbf{Institute email} & \textbf{Contribution} \\
+\midrule
+1 & Viren Poswal & 2024623 & viren24623@iiitd.ac.in & Dataset and size check (1) \\
+2 & Sahitya Sharma & 2023464 & sahitya23464@iiitd.ac.in & Preparation, before and after (2, 3) \\
+3 & Aadit Garg & 2024003 & aadit24003@iiitd.ac.in & EDA and problem statements (4) \\
+4 & Madhav Raj Gaur & 2024323 & madhav24323@iiitd.ac.in & Tests 1--3 (5) \\
+5 & Shivam Harit & 2024528 & shivam24528@iiitd.ac.in & Tests 4--5, limitations (5, 6) \\
+\bottomrule
+\end{tabularx}}
+\vspace{12pt}
+]
+
+%-----------------------------------------------------------------------
+\section{Dataset}
+
+\field{Source:}{Kaggle, ``Flight Price Prediction'': flight listings scraped from the
+EaseMyTrip booking portal for the six largest Indian metros (Delhi, Mumbai, Bangalore, Kolkata,
+Hyderabad, Chennai) over a 50-day window. One row is one flight listing on one search date.}
+
+\field{What is raw about it:}{a redundant row index (\code{Unnamed: 0}); ordinal and nominal
+attributes stored as text (\code{departure\_time}, \code{stops}, \code{class}); a right-skewed,
+bimodal target (\rs1,105 to \rs123,071); and a flight-code string with 1,561 levels.}
+
+{\small
+\begin{tabularx}{\linewidth}{@{}L{4.3cm} Y Y@{}}
+\toprule
+ & \textbf{Raw file} & \textbf{After encoding} \\
+\midrule
+Instances (rows) & 300{,}153 & 297{,}920 \\
+Attributes (columns) & 12 & 1{,}629 \\
+Instances $\times$ attributes & 3{,}601{,}836 & 485{,}311{,}680 \\
+\bottomrule
+\end{tabularx}}
+
+\field{Size check:}{$297{,}920\times1{,}629=485{,}311{,}680\ge3{,}000{,}000$, so the
+requirement is met (the raw file alone has $300{,}153\times12=3{,}601{,}836$). One-hot encoding
+of the 1,561 flight codes and 30 engineered routes is what takes it to 1,629 columns. The
+modelling matrix after dropping \code{flight} is $297{,}920\times68=20{,}258{,}560$, still
+above 3M.}
+
+\minihead{Key features}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.2cm} L{1.5cm} Y@{}}
+\toprule
+\textbf{Feature} & \textbf{Type} & \textbf{Real-world meaning} \\
+\midrule
+\code{price} & continuous & ticket fare in INR; our response \\
+\code{days\_left} & discrete & days between booking and departure (1--49) \\
+\code{duration} & continuous & total travel time in hours, including layovers \\
+\code{class} & ordinal & Economy $<$ Business seat \\
+\code{airline} & nominal & operating carrier, 6 levels \\
+\code{departure\_time} & ordinal & time-of-day slot, 6 levels \\
+\code{stops} & ordinal & zero $<$ one $<$ two or more \\
+\bottomrule
+\end{tabularx}}
+
+%-----------------------------------------------------------------------
+\section{Data preparation}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{1.9cm} L{2.4cm} Y@{}}
+\toprule
+\textbf{Issue found} & \textbf{What we did} & \textbf{Why, and not the alternative} \\
+\midrule
+Redundant index \code{Unnamed: 0}
+ & dropped
+ & a running row number carries no information and would leak row order into a model \\
+Missing values, duplicates
+ & checked: 0 missing, 0 duplicate rows
+ & nothing to impute or drop \\
+2,110 \code{duration} values above the IQR fence (30.18\,h)
+ & rows dropped ($Q_3+1.5\,\mathrm{IQR}$ rule)
+ & long-layover itineraries inflate fare variances, which Test 3 compares. Capping would invent
+   durations that were never flown \\
+123 \code{price} values above the fence (\rs99,128)
+ & rows dropped
+ & 0.04\% of rows, all extreme Business fares, that would dominate the variance tests; a log
+   transform would change the scale of every test \\
+\code{flight} has 1,561 levels
+ & dropped before modelling (Fig.~\ref{fig:eda}j)
+ & 1,561 sparse dummy columns, and the code prefix is fully determined by \code{airline} \\
+Text categoricals
+ & one-hot encoded; added \code{route} = source$\to$destination
+ & linear models need numbers; label codes would impose a false order on airlines and cities \\
+\bottomrule
+\end{tabularx}}
+
+%-----------------------------------------------------------------------
+\section{What changed after preparation}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.9cm} L{1.9cm} Y@{}}
+\toprule
+\textbf{Measure} & \textbf{Before} & \textbf{After} \\
+\midrule
+Rows & 300{,}153 & 297{,}920 (2{,}233 dropped, 0.74\%) \\
+Attributes & 12 & 11 raw; 1{,}629 encoded; 68 for modelling \\
+Missing / duplicate rows & 0 / 0 & 0 / 0 \\
+Duration range, mean & 0.83--49.83\,h, 12.22\,h & 0.83--30.17\,h, 12.07\,h \\
+Price range, median & \rs1,105--123,071, \rs7,425 & \rs1,105--98,972, \rs7,424 \\
+Economy share & 68.85\% & 68.74\% \\
+\bottomrule
+\end{tabularx}}
+
+\egblock{Dropping 0.74\% of rows cut the longest trip from 49.8\,h to 30.2\,h and the highest
+fare from \rs123k to \rs99k, while the median fare moved by \rs1 and the class mix by 0.1
+percentage points. Dropping \code{flight} shrank the modelling matrix from 1,629 to 68 columns
+without losing airline information.}
+
+%-----------------------------------------------------------------------
+\section{Basic questions and problem statement}
+
+\begin{figure*}[!t]
+\centering
+\subfig{0.325}{fig01.png}{4.3cm}{Vistara and Air India one-stop fares have the widest, highest spread; budget carriers stay below \rs35k.}\hfill
+\subfig{0.325}{fig02.png}{4.3cm}{Fares form two bands (Economy, Business) and the fitted line slopes gently down with days left.}\hfill
+\subfig{0.325}{fig03.png}{4.3cm}{Every departure slot is bimodal; Late Night lacks most of the Business mode.}\\[3pt]
+\subfig{0.19}{fig04.png}{4.3cm}{Numeric features are only weakly correlated: no multicollinearity.}\hfill
+\subfig{0.17}{fig06.png}{4.3cm}{68.7\% of listings are Economy, 31.3\% Business.}\hfill
+\subfig{0.29}{fig05.png}{4.3cm}{Vistara and Air India average 4--7$\times$ the fare of low-cost carriers.}\hfill
+\subfig{0.31}{fig07.png}{4.3cm}{Mean fare is flat to about 20 days out, climbs steeply, peaks 2 days out, then drops on the last day.}\\[3pt]
+\subfig{0.325}{fig08.png}{4.3cm}{Price is far from normal (QQ $R^2=0.756$), so every parametric test gets a rank-based or resampling check.}\hfill
+\subfig{0.325}{fig09.png}{4.3cm}{Price density splits cleanly by class; duration is multimodal (mean 12.07\,h).}\hfill
+\subfig{0.325}{fig10.png}{4.3cm}{\code{flight} has 1,561 levels and its code prefix maps one-to-one to \code{airline}, so we drop it.}
+\caption{Exploratory data analysis of the cleaned data ($N=297{,}920$). Each panel has its one-line takeaway.}
+\label{fig:eda}
+\end{figure*}
+
+\minihead{Basic questions}
+\begin{enumerate}[label=\arabic*.]
+  \item Which airline is cheapest? AirAsia (\rs4,091 on average); Vistara is dearest (\rs30,369).
+  \item How far apart are Economy and Business? \rs6,530 vs.\ \rs52,446 on average, an
+  8$\times$ gap that makes the fare distribution bimodal.
+  \item Does a longer trip cost more? Weakly: Pearson $r=0.215$ (and $r=-0.091$ for
+  \code{days\_left}).
+  \item Which departure slot is dearest? Night (\rs23,037); Late Night is cheapest (\rs9,295).
+  \item Which routes are busiest? Delhi$\to$Mumbai and Mumbai$\to$Delhi, with median fares of
+  \rs7,262 and \rs6,300.
+\end{enumerate}
+
+\minihead{Our problem statements}
+\noindent\fbox{\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}
+\textbf{P1 (primary, regression).} How does the fare of a flight change with the number of days
+left before departure, and after how many days does booking earlier stop saving money (the
+booking ``sweet spot'')? Does the last day bring a drop?
+
+\smallskip
+\textbf{P2.} Are late bookings ($\le20$ days) more expensive \emph{and} more volatile than early
+bookings ($>20$ days), and is that explained by a different class mix?
+\end{minipage}}
+
+\field{How they are novel:}{the basic questions describe static averages of one attribute at a
+time. Ours follow the fare \emph{trajectory} across the booking horizon, locate where the
+advance-purchase saving stops, and separate the horizon effect from the class mix, which drives
+most of the raw variance.}
+
+%-----------------------------------------------------------------------
+\section{Statistical inferences}
+
+\field{Rows tested:}{all 297,920 cleaned listings. Late $=$ \code{days\_left} $\le20$
+(112,403 rows), early $>20$ (185,517); last-minute $=\le7$ days. Every plan in part a) was fixed
+before the test was run. With five tests we also check each decision at the Bonferroni level
+$0.05/5=0.01$; none changes. With $N\approx3\times10^5$ almost any gap is significant, so we judge
+each test by whether its 95\% CI clears the smallest difference that matters.}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{0.25cm} Y L{1.45cm} L{1.2cm} L{1.0cm}@{}}
+\toprule
+\textbf{\#} & \textbf{Question} & \textbf{Statistic} & \textbf{Decision} & \textbf{Matters?} \\
+\midrule
+1 & Do fares drop on the last day? & $t=14.96$ & reject $H_0$ & yes \\
+2 & Are late bookings dearer? & $Z=46.09$ & reject $H_0$ & yes \\
+3 & Are late fares more volatile? & $F=0.977$ & fail to reject & no (pooled) \\
+4 & Does fare fall with days left? & $t=-49.77$ & reject $H_0$ & yes \\
+5 & Is class mix tied to timing? & $\chi^2=46.89$ & reject $H_0$ & no \\
+\bottomrule
+\end{tabularx}}
+
+
+%------------------------------------------------------------ Test 1
+\needspace{22\baselineskip}\subsection*{Test 1 (P1): do fares drop on the last day?}
+
+\tpart{a}{Hypotheses, written before running the test}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+$H_0$ & $\mu_{2}-\mu_{1}\le0$ \\
+$H_1$ & $\mu_{2}-\mu_{1}>0$ \\
+Significance level & $\alpha=0.05$ \\
+Side & one-sided (right) \\
+Test & Welch t-test \\
+Smallest difference that matters & \rs1,000 \\
+\bottomrule
+\end{tabularx}}
+
+\egblock{$\mu_2$, $\mu_1$: mean fare with 2 days and 1 day left. One-sided, because Fig.~\ref{fig:eda}g
+suggests a last-day clearance drop. \rs1,000 is about 5\% of a typical ticket, a saving a
+traveller would notice.}
+
+\tpart{b}{Other tests we considered}
+\egblock{Two independent groups (3,942 and 1,884 listings), a continuous response and unknown
+$\sigma$ call for a two-sample t-test. We use Welch's version because the spreads differ
+(SD \rs24,138 vs.\ \rs18,841; Levene $p=10^{-50}$). With $n>1{,}800$ per group the CLT makes the
+mean difference approximately normal despite the skew.}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.4cm} Y@{}}
+\toprule
+\textbf{Also considered} & \textbf{Why we did not use it} \\
+\midrule
+Pooled t-test & assumes equal variances, which Levene rejects. Run anyway: $t=13.72$ (5,824), $p=2\times10^{-42}$, same decision \\
+Mann--Whitney U & tests a shift in the whole distribution, not the mean fare paid. Agrees: $p=4\times10^{-24}$, $P(\text{day 2}>\text{day 1})=0.58$, medians \rs17,854 vs.\ \rs15,078 \\
+Permutation test & assumption-free check of the mean gap; 10,000 shuffles give $p<10^{-4}$ \\
+Bootstrap CI & assumption-free CI for the gap: [\rs7,542, \rs9,759], matching Welch \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{c}{Result}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+Estimate & \rs8,672 (\rs30,024 vs.\ \rs21,351) \\
+95\% confidence interval & \rs7,535 to \rs9,809 \\
+Test statistic (d.f.) & $t=14.96$ (4,634) \\
+p-value & $1.0\times10^{-49}$ \\
+Decision & reject $H_0$ \\
+\bottomrule
+\end{tabularx}}
+
+\egblock{Fares drop by about \rs8.7k on the final day (Cohen's $d=0.38$). The whole interval is
+more than seven times the \rs1,000 threshold, so the drop matters (Fig.~\ref{fig:tests}a).}
+
+\begin{figure*}[!t]
+\centering
+\subfig{0.24}{fig11.png}{4.5cm}{Test 1: mean fare peaks 2 days out and falls sharply on the final day.}\hfill
+\subfig{0.24}{fig12.png}{4.5cm}{Test 2: late bookings have a higher median and upper quartile.}\hfill
+\subfig{0.24}{fig13.png}{4.5cm}{Test 4: the fitted line falls by about \rs152 per extra day booked ahead.}\hfill
+\subfig{0.24}{fig15.png}{4.5cm}{Late Night fares sit lowest; Night and Morning highest.}\\[3pt]
+\subfig{0.22}{fig14.png}{4.5cm}{31.7\% of tickets cost over \rs20,000, nearly all Business.}\hfill
+\subfig{0.26}{fig16.png}{4.5cm}{Test 3: pooled fare SD is almost the same for early and late bookings.}\hfill
+\subfig{0.26}{fig17.png}{4.5cm}{Test 5: the Business share is only slightly higher for last-minute bookings.}
+\caption{Plots for the hypothesis tests. Each panel has its one-line takeaway.}
+\label{fig:tests}
+\end{figure*}
+
+%------------------------------------------------------------ Test 2
+\needspace{22\baselineskip}\subsection*{Test 2 (P2): are late bookings more expensive?}
+
+\tpart{a}{Hypotheses, written before running the test}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+$H_0$ & $\mu_{\text{late}}-\mu_{\text{early}}=0$ \\
+$H_1$ & $\mu_{\text{late}}-\mu_{\text{early}}\ne0$ \\
+Significance level & $\alpha=0.05$ \\
+Side & two-sided \\
+Test & two-sample z-test \\
+Smallest difference that matters & \rs500 \\
+\bottomrule
+\end{tabularx}}
+
+\egblock{Two-sided, because a late \emph{discount} (as on the last day) was also plausible.}
+
+\tpart{b}{Other tests we considered}
+\egblock{Both groups are very large (112,403 and 185,517), so the sample SDs estimate $\sigma$
+almost exactly and the z statistic is valid without assuming normality.}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.4cm} Y@{}}
+\toprule
+\textbf{Also considered} & \textbf{Why we did not use it} \\
+\midrule
+Welch t-test & identical at this size: $t=46.09$ (239,268); adds nothing \\
+Mann--Whitney U & checks the result is not driven by outliers: $p<10^{-300}$, $P(\text{late}>\text{early})=0.65$, medians \rs11,511 vs.\ \rs6,067 \\
+Paired t-test & nothing to pair: listings are not matched across windows \\
+One-way ANOVA over 49 days & answers a vaguer question (``some day differs''); Test 4 models the trend instead \\
+z-test within each class & run as a check, since class dominates price (result below) \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{c}{Result}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+Estimate & \rs3,924 (\rs23,327 vs.\ \rs19,402), +20.2\% \\
+95\% confidence interval & \rs3,757 to \rs4,091 \\
+Test statistic (d.f.) & $z=46.09$ (none for a z-test) \\
+p-value & $<10^{-300}$ \\
+Decision & reject $H_0$ \\
+\bottomrule
+\end{tabularx}}
+
+\egblock{Late bookings cost about \rs3.9k more, far above \rs500 (Fig.~\ref{fig:tests}b). The
+premium is \rs4,069 [4,036, 4,102] (+81\%) within Economy and \rs1,846 [1,673, 2,018] (+3.6\%)
+within Business. Narrowing ``late'' to the last week widens the gap to \rs6,912 ($z=49.4$).}
+
+%------------------------------------------------------------ Test 3
+\needspace{22\baselineskip}\subsection*{Test 3 (P2): are late-booking fares more volatile?}
+
+\tpart{a}{Hypotheses, written before running the test}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+$H_0$ & $\sigma^2_{\text{late}}/\sigma^2_{\text{early}}\le1$ \\
+$H_1$ & $\sigma^2_{\text{late}}/\sigma^2_{\text{early}}>1$ \\
+Significance level & $\alpha=0.05$ \\
+Side & one-sided (right) \\
+Test & F-test for two variances \\
+Smallest difference that matters & SD 10\% higher (variance ratio 1.21) \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{b}{Other tests we considered}
+\egblock{P2 asks whether the late variance is \emph{larger}; the F ratio is exactly that, and it
+allows a one-sided alternative and a CI for the ratio. It assumes normality, which fails
+(Fig.~\ref{fig:eda}h), so we compared it with robust tests.}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.4cm} Y@{}}
+\toprule
+\textbf{Also considered} & \textbf{Why we did not use it} \\
+\midrule
+Bartlett & also assumes normality: $\chi^2=18.6$, $p=2\times10^{-5}$ \\
+Levene (mean) & robust but two-sided only: $W=134.2$ (1, 297,918), $p=5\times10^{-31}$ \\
+Brown--Forsythe (median) & most robust, two-sided only: $W=169.9$, $p=8\times10^{-39}$; mean $|x-\text{median}|$ is \rs16,328 (late) vs.\ \rs15,309 (early) \\
+F-test within each class & run as a check, since the class gap dominates the pooled spread \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{c}{Result}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+Estimate & variance ratio 0.977 (SD \rs22,430 vs.\ \rs22,690) \\
+95\% confidence interval & 0.967 to 0.988 \\
+Test statistic (d.f.) & $F=0.977$ (112,402; 185,516) \\
+p-value & 1.000 \\
+Decision & fail to reject $H_0$ \\
+\bottomrule
+\end{tabularx}}
+
+\egblock{Pooled over both classes, late fares are not more variable: the interval lies below 1,
+far from 1.21 (Fig.~\ref{fig:tests}f). The tests disagree because they measure different things,
+and pooling hides real volatility. Within Economy, late fares have more than twice the SD
+(\rs4,425 vs.\ \rs2,030; $F=4.75$ [4.69, 4.81]); within Business they are about 10\% more spread
+($F=1.21$ [1.19, 1.23]); both $p<10^{-90}$. P2's answer is \emph{yes within each class, no when
+pooled}.}
+
+%------------------------------------------------------------ Test 4
+\needspace{22\baselineskip}\subsection*{Test 4 (P1): does fare fall as booking moves earlier?}
+
+\tpart{a}{Hypotheses, written before running the test}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+$H_0$ & $\beta_1=0$ in $\text{price}=\beta_0+\beta_1\,\text{days\_left}+\varepsilon$ \\
+$H_1$ & $\beta_1\ne0$ \\
+Significance level & $\alpha=0.05$ \\
+Side & two-sided \\
+Test & t-test on the OLS slope \\
+Smallest difference that matters & \rs100 per day (\rs1,000 for 10 days) \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{b}{Other tests we considered}
+\egblock{P1 is a regression problem; the slope is the average saving per extra day of advance
+booking, and its t-test is the standard inference for it.}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.4cm} Y@{}}
+\toprule
+\textbf{Also considered} & \textbf{Why we did not use it} \\
+\midrule
+HC1 robust SE & residuals are heteroscedastic; robust SE 3.06 vs.\ 3.05, $t=-49.7$, same decision \\
+Spearman, Kendall & test any monotone trend, not the size of the saving: $\rho=-0.266$, $\tau_b=-0.185$, both $p<10^{-300}$; much stronger than Pearson $r=-0.091$, so the trend is monotone but not linear \\
+Regression with class & checks the slope is not a class artefact: $\hat\beta_1=-130.6$ (SE 1.03), $R^2=0.887$ \\
+Piecewise slopes & test the sweet spot directly (result below) \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{c}{Result}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+Estimate & $-$\rs152 per extra day booked ahead \\
+95\% confidence interval & $-157.9$ to $-146.0$ \\
+Test statistic (d.f.) & $t=-49.77$ (297,918) \\
+p-value & $<10^{-300}$ \\
+Decision & reject $H_0$ \\
+\bottomrule
+\end{tabularx}}
+
+\egblock{The whole interval is beyond \rs100/day (Fig.~\ref{fig:tests}c). Pooled $R^2$ is only
+0.008 because class dominates; within Economy it is 0.313. The piecewise fit locates the sweet
+spot: within 20 days of departure each extra day booked ahead saves \rs464 [440, 488], but beyond
+20 days only \rs25 [13, 38], under the \rs100 threshold. \textbf{Booking about three weeks ahead
+captures nearly all the savings.}}
+
+%------------------------------------------------------------ Test 5
+\needspace{22\baselineskip}\subsection*{Test 5 (P2): does the class mix change for last-minute bookings?}
+
+\tpart{a}{Hypotheses, written before running the test}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+$H_0$ & booking timing (last-minute $\le7$ days / standard) is independent of class \\
+$H_1$ & the two are associated \\
+Significance level & $\alpha=0.05$ \\
+Side & right tail of $\chi^2$ \\
+Test & Pearson $\chi^2$ test of independence \\
+Smallest difference that matters & 5 percentage points in Business share \\
+\bottomrule
+\end{tabularx}}
+
+\egblock{This checks whether the premium in Tests 1--2 could simply be more Business tickets among
+late bookings.}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.6cm} Y Y Y@{}}
+\toprule
+ & \textbf{Business} & \textbf{Economy} & \textbf{Business share} \\
+\midrule
+Last-minute ($\le7$ d) & 10,422 & 21,211 & 32.95\% \\
+Standard ($>7$ d) & 82,706 & 183,581 & 31.06\% \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{b}{Other tests we considered}
+\egblock{Two categorical variables and all expected counts $\ge9{,}888$, so the $\chi^2$
+approximation is excellent.}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.4cm} Y@{}}
+\toprule
+\textbf{Also considered} & \textbf{Why we did not use it} \\
+\midrule
+Yates-corrected $\chi^2$ & correction matters only for small counts: $\chi^2=46.80$, same decision \\
+G-test & likelihood-ratio version, equivalent at this size: $G=46.50$, $p=9\times10^{-12}$ \\
+Two-proportion z-test & equivalent ($z=6.85$, $z^2=\chi^2$); we use it for the CI below \\
+Fisher's exact test & built for small expected counts, so unnecessary: OR $=1.09$, $p=9\times10^{-12}$ \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{c}{Result}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+Estimate & +1.89 pp Business share (Cramér's $V=0.013$) \\
+95\% confidence interval & +1.34 to +2.43 pp \\
+Test statistic (d.f.) & $\chi^2=46.89$ (1) \\
+p-value & $7.5\times10^{-12}$ \\
+Decision & reject $H_0$ \\
+\bottomrule
+\end{tabularx}}
+
+\egblock{The association is real but does not matter: the whole interval is below 5 pp
+(Fig.~\ref{fig:tests}g). So the late-booking premium in Tests 1--2 is not a class-mix effect.}
+
+
+\minihead{What we conclude}
+\egblock{Fares are flat beyond about 20 days and rise steeply inside that window, so about three
+weeks ahead is the sweet spot (Test 4). Late bookings cost \rs3.9k more, +81\% in Economy
+(Test 2), yet fares drop by \rs8.7k on the very last day (Test 1). Late fares are more volatile
+within each class, which a pooled test misses (Test 3), and none of this is a class-mix effect
+(Test 5).}
+
+%-----------------------------------------------------------------------
+\section{Limitations}
+
+\begin{itemize}
+  \item \textbf{Association, not cause.} Fare gaps reflect demand, competition and seat
+  inventory, none of which is recorded; the tests cannot show that booking later \emph{causes}
+  higher fares.
+  \item \textbf{Listings are not fully independent.} The same flight appears on many search
+  dates, so the effective sample is smaller than 297,920 and our p-values are optimistic. The
+  effect sizes and intervals are less affected.
+  \item \textbf{One 50-day window.} Seasonality, holidays, fuel surcharges and load factors are
+  absent, so the 20-day sweet spot may differ in other seasons.
+  \item \textbf{Dropped rows.} The 2,233 outlier rows (long layovers and extreme Business fares)
+  are not covered by our conclusions.
+  \item \textbf{Bimodal fares.} Business fares dominate the pooled variance and mask
+  within-class effects (Tests 3--4); the P1 model must condition on class or use
+  $\log(\text{price})$.
+\end{itemize}
+
+\end{document}
